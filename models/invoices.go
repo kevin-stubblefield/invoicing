@@ -37,28 +37,20 @@ func NewInvoice() Invoice {
 	newId := uuid.New()
 
 	newItems := []Item{
-		NewItem(1, "Beans", "It's just beans!", "Food", 100, 50, "CASH"),
-		NewItem(2, "Chicken", "Whole chicken", "Food", 649, 15, "PERCENT"),
-		NewItem(3, "Hourly Labor", "Work completed", "Labor", 3500, 0, "NONE"),
+		{1, "Beans", "It's just beans!", "Food", 100, 50, "CASH"},
+		{2, "Chicken", "Whole chicken", "Food", 649, 15, "PERCENT"},
+		{3, "Hourly Labor", "Work completed", "Labor", 3500, 0, "NONE"},
 	}
 
 	newLines := []Line{
-		NewLine(1, 1, 4, newItems[0], newId),
-		NewLine(2, 2, 1, newItems[1], newId),
-		NewLine(3, 3, 8, newItems[2], newId),
+		{1, 1, 4, newItems[0], newId},
+		{2, 2, 1, newItems[1], newId},
+		{3, 3, 8, newItems[2], newId},
 	}
 
 	invoice := Invoice{uuid.New(), newLines}
 
 	return invoice
-}
-
-func NewLine(id int32, lineNumber int32, quantity int32, item Item, invoiceId uuid.UUID) Line {
-	return Line{id, lineNumber, quantity, item, invoiceId}
-}
-
-func NewItem(id int32, name string, description string, itemType string, unitPrice int32, discount float32, discountType string) Item {
-	return Item{id, name, description, itemType, unitPrice, discount, discountType}
 }
 
 func (invoice Invoice) String() string {
