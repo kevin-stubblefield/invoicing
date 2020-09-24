@@ -2,13 +2,16 @@ package models
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 )
 
 type Invoice struct {
-	Id    uuid.UUID
-	Lines []Line
+	Id        uuid.UUID
+	Lines     []Line
+	Purchaser string
+	Date      time.Time
 }
 
 type Line struct {
@@ -29,8 +32,27 @@ type Item struct {
 	DiscountType string
 }
 
-func (db DB) FetchInvoices() ([]Invoice, error) {
-	return db.invoices, nil
+func (db DB) FetchInvoices() ([]*Invoice, error) {
+	rows, err := db.Query("select * from invoices")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	invoices := make([]*Invoice, 0)
+	for rows.Next() {
+		invoice := new(Invoice)
+		err := rows.Scan(&invoice.Id, &invoice.Date, &invoice.Purchaser)
+		if err != nil {
+			return nil, err
+		}
+		invoices = append(invoices, invoice)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return invoices, nil
 }
 
 func NewInvoice() Invoice {
@@ -48,7 +70,7 @@ func NewInvoice() Invoice {
 		{3, 3, 8, newItems[2], newId},
 	}
 
-	invoice := Invoice{uuid.New(), newLines}
+	invoice := Invoice{uuid.New(), newLines, "Kevin", time.Now()}
 
 	return invoice
 }

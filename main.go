@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"invoicing/models"
+	"log"
 )
 
 type Env struct {
@@ -10,9 +11,9 @@ type Env struct {
 }
 
 func main() {
-	db, err := models.NewDB()
+	db, err := models.NewDB("postgres://postgres:glitter@localhost:5432/invoicing?sslmode=disable")
 	if err != nil {
-		fmt.Printf("Error: %b\n", err)
+		log.Panic(err)
 	}
 	env := &Env{db}
 	invoices, err := env.db.FetchInvoices()
