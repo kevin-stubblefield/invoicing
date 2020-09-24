@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -8,32 +9,32 @@ import (
 )
 
 type Invoice struct {
-	Id        uuid.UUID
-	Lines     []Line
-	Purchaser string
-	Date      time.Time
+	Id        uuid.UUID `json:"id"`
+	Lines     []Line    `json:"lines"`
+	Purchaser string    `json:"purchaser"`
+	CreatedAt time.Time `json:"invoice_timestamp"`
 }
 
 type Line struct {
-	Id         int32
-	LineNumber int32
-	Quantity   int32
-	Item       Item
+	Id         int32 `json:"id"`
+	LineNumber int32 `json:"line_number"`
+	Quantity   int32 `json:"quantity"`
+	Item       Item  `json:"item"`
 	InvoiceId  uuid.UUID
 }
 
 type Item struct {
 	Id           int32
-	Name         string
-	Description  string
-	Type         string
-	UnitPrice    int32
-	Discount     float32
-	DiscountType string
+	Name         string  `json:"name"`
+	Description  string  `json:"description"`
+	Type         string  `json:"type"`
+	UnitPrice    int32   `json:"unit_price"`
+	Discount     float32 `json:"discount"`
+	DiscountType string  `json:"discount_type"`
 }
 
 func (db DB) FetchInvoices() ([]*Invoice, error) {
-	rows, err := db.Query("select * from invoices")
+	rows, err := db.Query("select row_to_json(row) from ( select * from invoice_lines_json ) row;")
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +43,12 @@ func (db DB) FetchInvoices() ([]*Invoice, error) {
 	invoices := make([]*Invoice, 0)
 	for rows.Next() {
 		invoice := new(Invoice)
-		err := rows.Scan(&invoice.Id, &invoice.Date, &invoice.Purchaser)
+		var result []byte
+		err := rows.Scan(&result)
+		if err != nil {
+			return nil, err
+		}
+		err = json.Unmarshal(result, &invoice)
 		if err != nil {
 			return nil, err
 		}
@@ -76,7 +82,7 @@ func NewInvoice() Invoice {
 }
 
 func (invoice Invoice) String() string {
-	invoiceString := fmt.Sprintf("Invoice %v\n-------------------------------------------------------------", invoice.Id)
+	invoiceString := fmt.Sprintf("Invoice %v Purchaser: %v Date: %v\n-------------------------------------------------------------", invoice.Id, invoice.Purchaser, invoice.CreatedAt)
 	invoiceString += fmt.Sprintf("\n%-5s %-5s %-8s %-12s %-10s %-10s %-10s %-8s", "Id", "Line", "Quantity", "Item", "Unit Price", "Discount", "Disc Type", "Total")
 
 	for _, line := range invoice.Lines {
